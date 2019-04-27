@@ -1,0 +1,9 @@
+version: "2"
+services:
+  webserver:
+    image: kimpa0107/webserver:1.0
+    container_name: webserver
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d
+    ports:
+      - "8080:80"
