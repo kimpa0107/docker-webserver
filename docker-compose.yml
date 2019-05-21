@@ -7,9 +7,5 @@ services:
       - ./nginx/conf.d/:/etc/nginx/conf.d
       - ~/projects/:/www/
       - ~/dockers/projects/ikimpa.com/:/www/ikimpa.com/
-      #- ~/projects/wegather-laravel-api/:/www/wegather-laravel-api/
-      #- ~/projects/phpmemadmin/:/www/phpmemadmin/
-      #- ~/projects/github/fastadmin/:/www/fastadmin/
-      #- ~/projects/tp5.ikimpa.com/:/www/tp5.ikimpa.com/
     ports:
       - "80:80"
