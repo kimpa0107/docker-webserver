@@ -2,6 +2,18 @@ FROM debian:stretch-slim
 
 COPY php-docker-script/* /usr/local/bin/
 
+RUN apt-get update && apt-get install -y apt-utils \
+	&& apt-get install -y \
+		openssl \
+		curl \
+		xz-utils \
+		zip unzip \
+		procps net-tools \
+		vim \
+		git
+
+RUN apt-get install ca-certificates
+
 ########### Install PHP 7.2 ###########
 
 # prevent Debian's PHP packages from being installed
@@ -29,9 +41,6 @@ ENV PHPIZE_DEPS \
 # persistent / runtime deps
 RUN apt-get update && apt-get install -y \
 		$PHPIZE_DEPS \
-		ca-certificates \
-		curl \
-		xz-utils \
 	--no-install-recommends && rm -r /var/lib/apt/lists/*
 
 ENV PHP_INI_DIR /usr/local/etc/php
@@ -76,7 +85,7 @@ RUN set -xe; \
 	fi; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends $fetchDeps; \
-	rm -rf /var/lib/apt/lists/*; \
+	#rm -rf /var/lib/apt/lists/*; \
 	\
 	mkdir -p /usr/src; \
 	cd /usr/src; \
@@ -133,7 +142,7 @@ RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends libargon2-dev; \
 ##</argon2>##
-	rm -rf /var/lib/apt/lists/*; \
+	#rm -rf /var/lib/apt/lists/*; \
 	\
 	export \
 		CFLAGS="$PHP_CFLAGS" \
@@ -267,15 +276,15 @@ EXPOSE 9000
 
 ########### Install Some php extension ###########
 
-RUN apt-get update && apt-get -y install procps net-tools \
-		vim \
+RUN apt-get update && apt-get -y install \
 		libfreetype6-dev \
 		libjpeg62-turbo-dev \
 		libpng-dev \
 		libmemcached-dev zlib1g-dev \
 	&& docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
-	&& docker-php-ext-install -j$(nproc) gd \
+	&& docker-php-ext-install -j$(nproc) gd  \
 	&& docker-php-ext-install pdo_mysql \
+	&& docker-php-ext-install zip \
 	&& pecl install memcached redis \
 	&& docker-php-ext-enable memcached redis
 
@@ -290,7 +299,7 @@ COPY docker-web-entrypoint.sh /usr/local/bin/
 
 RUN curl -sS https://getcomposer.org/installer | php \
 	&& mv composer.phar /usr/local/bin/composer \
-	&& composer config -g repo.packagist composer https://packagist.phpcomposer.com
+	&& composer config -g repo.packagist composer https://packagist.laravel-china.org
 
 
 ########### Install Nginx ###########
@@ -374,7 +383,7 @@ RUN set -x \
 	&& apt-get install --no-install-recommends --no-install-suggests -y \
 						$nginxPackages \
 						gettext-base \
-	&& apt-get remove --purge --auto-remove -y apt-transport-https ca-certificates && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/nginx.list \
+	&& rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/nginx.list \
 	\
 # if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
 	&& if [ -n "$tempDir" ]; then \

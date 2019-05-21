@@ -1,9 +1,15 @@
 version: "2"
 services:
   webserver:
-    image: kimpa0107/webserver:1.0
+    image: kimpa0107/webserver:1.1
     container_name: webserver
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d
+      - ~/projects/:/www/
+      - ~/dockers/projects/ikimpa.com/:/www/ikimpa.com/
+      #- ~/projects/wegather-laravel-api/:/www/wegather-laravel-api/
+      #- ~/projects/phpmemadmin/:/www/phpmemadmin/
+      #- ~/projects/github/fastadmin/:/www/fastadmin/
+      #- ~/projects/tp5.ikimpa.com/:/www/tp5.ikimpa.com/
     ports:
-      - "8080:80"
+      - "80:80"
