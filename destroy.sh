@@ -2,4 +2,4 @@
 
 docker-compose down
 
-docker rmi kimpa0107/webserver:1.0
+docker rmi kimpa0107/webserver:1.1
