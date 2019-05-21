@@ -1,2 +1,3 @@
 install.log
 nginx/conf.d/*
+docker-compose.yml
