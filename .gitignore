@@ -1,3 +1,4 @@
 install.log
 nginx/conf.d/*
+nginx/ssl/
 docker-compose.yml
