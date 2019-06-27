@@ -6,5 +6,8 @@ services:
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d
       - ~/projects/:/www/
+      - ./php-ini:/usr/local/etc/php/custom.d
+    environment:
+      PHP_INI_SCAN_DIR: "/usr/local/etc/php/custom.d:/usr/local/etc/php/conf.d"
     ports:
       - "80:80"
