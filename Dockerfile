@@ -2,19 +2,33 @@ FROM debian:stretch-slim
 
 COPY php-docker-script/* /usr/local/bin/
 
-RUN apt-get update && apt-get install -y apt-utils \
-	&& apt-get install -y \
-		openssl \
-		curl \
-		xz-utils \
-		zip unzip \
-		procps net-tools \
-		vim \
-		git
+# Debian Aliyun Mirror
+RUN set -eux; \
+	{ \
+		echo 'deb http://mirrors.aliyun.com/debian/ stretch main non-free contrib'; \
+		echo 'deb-src http://mirrors.aliyun.com/debian/ stretch main non-free contrib'; \
+		echo 'deb http://mirrors.aliyun.com/debian-security stretch/updates main'; \
+		echo 'deb-src http://mirrors.aliyun.com/debian-security stretch/updates main'; \
+		echo 'deb http://mirrors.aliyun.com/debian/ stretch-updates main non-free contrib'; \
+		echo 'deb-src http://mirrors.aliyun.com/debian/ stretch-updates main non-free contrib'; \
+		echo 'deb http://mirrors.aliyun.com/debian/ stretch-backports main non-free contrib'; \
+		echo 'deb-src http://mirrors.aliyun.com/debian/ stretch-backports main non-free contrib'; \
+	} > /etc/apt/sources.list
+
+RUN apt-get update \
+	&& apt-get install -y apt-transport-https \
+	&& apt-get install -y apt-utils \
+	&& apt-get install -y openssl \
+			curl \
+			xz-utils \
+			zip unzip \
+			procps net-tools \
+			vim \
+			git
 
 RUN apt-get install ca-certificates
 
-########### Install PHP 7.2 ###########
+########### Install PHP 7.3.8 ###########
 
 # prevent Debian's PHP packages from being installed
 # https://github.com/docker-library/php/pull/542
@@ -27,21 +41,12 @@ RUN set -eux; \
 
 # dependencies required for running "phpize"
 # (see persistent deps below)
-ENV PHPIZE_DEPS \
-		autoconf \
-		dpkg-dev \
-		file \
-		g++ \
-		gcc \
-		libc-dev \
-		make \
-		pkg-config \
-		re2c
+ENV PHPIZE_DEPS autoconf dpkg-dev file g++ gcc libc-dev make pkg-config re2c
 
 # persistent / runtime deps
-RUN apt-get update && apt-get install -y \
-		$PHPIZE_DEPS \
-	--no-install-recommends && rm -r /var/lib/apt/lists/*
+RUN apt-get update \
+	&& apt-get install -y $PHPIZE_DEPS --no-install-recommends \
+	&& rm -r /var/lib/apt/lists/*
 
 ENV PHP_INI_DIR /usr/local/etc/php
 RUN set -eux; \
@@ -68,9 +73,13 @@ ENV PHP_LDFLAGS="-Wl,-O1 -Wl,--hash-style=both -pie"
 
 ENV GPG_KEYS 1729F83938DA44E27BA0F4D3DBDB397470D12172 B1B44D8F021E4E2D6021E995DC9FF8D3EE5AF27F
 
-ENV PHP_VERSION 7.2.17
-ENV PHP_URL="https://www.php.net/get/php-7.2.17.tar.xz/from/this/mirror" PHP_ASC_URL="https://www.php.net/get/php-7.2.17.tar.xz.asc/from/this/mirror"
-ENV PHP_SHA256="a3e5f51a9ae08813b3925bea3a4de02cd4906fcccf75646e267a213bb63bcf84" PHP_MD5=""
+ENV PHP_VERSION 7.3.8
+ENV PHP_URL="https://www.php.net/get/php-7.3.8.tar.xz/from/this/mirror" PHP_ASC_URL="https://www.php.net/get/php-7.3.8.tar.xz.asc/from/this/mirror"
+ENV PHP_SHA256="de06aff019d8f5079115795bd7d8eedd4cd03daecb62d58abb18f492dd995c95" PHP_MD5=""
+
+RUN mkdir -p /usr/src
+COPY php.tar.xz /usr/src
+COPY php.tar.xz.asc /usr/src
 
 RUN set -xe; \
 	\
@@ -85,31 +94,30 @@ RUN set -xe; \
 	fi; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends $fetchDeps; \
-	#rm -rf /var/lib/apt/lists/*; \
-	\
-	mkdir -p /usr/src; \
-	cd /usr/src; \
-	\
-	wget -O php.tar.xz "$PHP_URL"; \
-	\
-	if [ -n "$PHP_SHA256" ]; then \
-		echo "$PHP_SHA256 *php.tar.xz" | sha256sum -c -; \
-	fi; \
-	if [ -n "$PHP_MD5" ]; then \
-		echo "$PHP_MD5 *php.tar.xz" | md5sum -c -; \
-	fi; \
-	\
-	if [ -n "$PHP_ASC_URL" ]; then \
-		wget -O php.tar.xz.asc "$PHP_ASC_URL"; \
-		export GNUPGHOME="$(mktemp -d)"; \
-		for key in $GPG_KEYS; do \
-			gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
-		done; \
-		gpg --batch --verify php.tar.xz.asc php.tar.xz; \
-		command -v gpgconf > /dev/null && gpgconf --kill all; \
-		rm -rf "$GNUPGHOME"; \
-	fi; \
-	\
+#	\
+#	mkdir -p /usr/src; \
+#	cd /usr/src; \
+#	\
+#	wget -O php.tar.xz "$PHP_URL"; \
+#	\
+#	if [ -n "$PHP_SHA256" ]; then \
+#		echo "$PHP_SHA256 *php.tar.xz" | sha256sum -c -; \
+#	fi; \
+#	if [ -n "$PHP_MD5" ]; then \
+#		echo "$PHP_MD5 *php.tar.xz" | md5sum -c -; \
+#	fi; \
+#	\
+#	if [ -n "$PHP_ASC_URL" ]; then \
+#		wget -O php.tar.xz.asc "$PHP_ASC_URL"; \
+#		export GNUPGHOME="$(mktemp -d)"; \
+#		for key in $GPG_KEYS; do \
+#			gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
+#		done; \
+#		gpg --batch --verify php.tar.xz.asc php.tar.xz; \
+#		command -v gpgconf > /dev/null && gpgconf --kill all; \
+#		rm -rf "$GNUPGHOME"; \
+#	fi; \
+#	\
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false $fetchDeps
 
 #COPY docker-php-source /usr/local/bin/
@@ -126,6 +134,7 @@ RUN set -eux; \
 		libssl-dev \
 		libxml2-dev \
 		zlib1g-dev \
+		libzip-dev \
 		${PHP_EXTRA_BUILD_DEPS:-} \
 	; \
 ##<argon2>##
@@ -277,6 +286,7 @@ EXPOSE 9000
 ########### Install Some php extension ###########
 
 RUN apt-get update && apt-get -y install \
+		libzip-dev \
 		libfreetype6-dev \
 		libjpeg62-turbo-dev \
 		libpng-dev \
@@ -299,7 +309,7 @@ COPY docker-web-entrypoint.sh /usr/local/bin/
 
 RUN curl -sS https://getcomposer.org/installer | php \
 	&& mv composer.phar /usr/local/bin/composer \
-	&& composer config -g repo.packagist composer https://packagist.laravel-china.org
+	&& composer config -g repo.packagist composer https://packagist.phpcomposer.com
 
 
 ########### Install Nginx ###########
